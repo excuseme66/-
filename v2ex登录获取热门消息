@@ -1,0 +1,56 @@
+# -*- coding: utf-8 -*-
+import requests
+import re
+from bs4 import BeautifulSoup
+headers={
+    'user-agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.82 Safari/537.36',
+    'accept-encoding':'gzip, deflate'
+}
+proxies={
+    'http':'http://119.254.84.90:80',
+    'https':'http://119.254.84.90:1080',
+}
+
+
+def getOnce():
+    v2ex_session = requests.session()
+    login_url='https://www.v2ex.com/signin'
+    f=v2ex_session.get(login_url,headers=headers)
+    re_Once=r'<input type="hidden" value="(.*?)" name="once" />'
+    once=re.findall(re_Once,f.content)
+    return once
+params={'once':getOnce()}
+
+
+def login(username,pwd):
+    data={'c8c64a09ab6b9d33f8485909dafa2246069cbc3cdca0383da94caca5a76595a1':username,
+          '1e56fff0d93692700c056caa5f5b4df1bed8a057b1c2e980250efa2abae17dc9':pwd,
+          'once':getOnce(),
+          'next':'/'
+    }
+    login_url='https://www.v2ex.com/signin'
+    session=requests.session()
+    s=session.post(login_url,proxies=proxies,data=data,headers=headers)
+    print s.status_code
+    if s.status_code==200:
+        print '登录成功'
+    else:
+        '登录失败'
+    return s.content.encode('utf-8')
+def getContent():
+    soup=BeautifulSoup(login(username,pwd),'html.parser')
+    for item in soup.find_all('div',class_='cell item'):
+        title=item.find('span',class_='item_title').string
+        src=item.find('span',class_='item_title').a['href']
+        print '标题:%s,链接：https://www.v2ex.com%s'%(title,src)
+def getHottitle():
+    soup=BeautifulSoup(login(username,pwd),'html.parser')
+    for item in soup.find_all('div',id='TopicsHot'):
+        title=item.find('span',class_='item_hot_topic_title').string
+        src=item.find('span',class_='item_hot_topic_title').a['href']
+        print '标题:%s,链接：https://www.v2ex.com%s'%(title,src)
+
+if __name__=='__main__':
+    username=raw_input('请输入帐号:')
+    pwd=raw_input('请输入密码:')
+    getContent()
